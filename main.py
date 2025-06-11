@@ -1,51 +1,58 @@
 import os
-from flask import Flask
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import asyncio
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from flask import Flask
 
-TOKEN = os.getenv("BOT_TOKEN")
-PORT = int(os.environ.get('PORT', 10000))
+TOKEN = os.getenv("TOKEN")
+if not TOKEN:
+    raise ValueError("توکن ربات در متغیر محیطی TOKEN تنظیم نشده!")
 
-# ایجاد اپلیکیشن تلگرام
-application = Application.builder().token(TOKEN).build()
-
-# هندلر استارت
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("سلام! فایل بفرست تا برات لینک بسازم.")
-
-# هندلر پیام
-async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    file = update.message.document
-    if file:
-        file_info = await context.bot.get_file(file.file_id)
-        await update.message.reply_text(f"🔗 لینک فایل:\n{file_info.file_path}")
-
-# افزودن هندلرها
-application.add_handler(CommandHandler("start", start))
-application.add_handler(MessageHandler(filters.Document.ALL, handle_document))
-
-# Flask setup
 app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def home():
-    return "✅ Bot is running"
+    return "ربات آنلاین است 🌐"
 
-# تابع async برای اجرای هر دو اپلیکیشن
-async def main():
-    # اجرای اپ تلگرام در پس‌زمینه
-    await application.initialize()
-    await application.start()
-    await application.updater.start_polling()
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("سلام! فایل، عکس یا ویدیوت رو بفرست تا لینک مستقیم تلگرامش رو بدم.")
 
-    # Flask را با asyncio اجرا کن
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
-    config = Config()
-    config.bind = [f"0.0.0.0:{PORT}"]
-    await serve(app, config)
+async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    file = None
+    if update.message.document:
+        file = update.message.document
+    elif update.message.video:
+        file = update.message.video
+    elif update.message.photo:
+        file = update.message.photo[-1]
+    else:
+        await update.message.reply_text("⚠️ فقط فایل، ویدیو یا عکس پشتیبانی می‌شود.")
+        return
 
-# اجرای اپ
+    telegram_file = await file.get_file()
+    file_url = telegram_file.file_path
+    direct_link = f"https://api.telegram.org/file/bot{TOKEN}/{file_url}"
+
+    await update.message.reply_text(
+        f"✅ لینک مستقیم آماده شد:\n📎 {direct_link}\n\n"
+        "📌 اگر تلگرام فیلتر است، ممکن است نیاز به فیلترشکن باشد."
+    )
+
+async def run_bot():
+    application = ApplicationBuilder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.Document.ALL | filters.VIDEO | filters.PHOTO, handle_file))
+    
+    print("🤖 ربات در حال اجراست...")
+    await application.run_polling()
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    # برای اینکه همزمان فلاسک و ربات اجرا بشن
+    import threading
+
+    def run_flask():
+        app.run(host="0.0.0.0", port=10000)
+
+    threading.Thread(target=run_flask).start()
+
+    asyncio.run(run_bot())
