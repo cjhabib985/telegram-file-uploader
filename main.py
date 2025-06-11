@@ -1,5 +1,4 @@
 import os
-import asyncio
 import threading
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
@@ -10,18 +9,18 @@ TOKEN = os.getenv("TOKEN")
 if not TOKEN:
     raise ValueError("توکن ربات در متغیر محیطی TOKEN تنظیم نشده!")
 
-# ایجاد اپ Flask برای وضعیت سرور
+# ساخت اپلیکیشن Flask
 app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def home():
     return "ربات آنلاین است 🌐"
 
-# هندلر /start
+# هندلر دستور /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("سلام! فایل، عکس یا ویدیوت رو بفرست تا لینک مستقیم تلگرامش رو بدم.")
 
-# هندلر فایل/عکس/ویدیو
+# هندلر برای دریافت فایل، ویدیو یا عکس و ارسال لینک مستقیم
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file = None
     if update.message.document:
@@ -43,20 +42,18 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📌 اگر تلگرام فیلتر است، ممکن است نیاز به فیلترشکن باشد."
     )
 
-# اجرای ربات تلگرام در یک thread جدا
-def run_telegram_bot():
-    async def _run():
-        application = ApplicationBuilder().token(TOKEN).build()
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(MessageHandler(filters.Document.ALL | filters.VIDEO | filters.PHOTO, handle_file))
-        print("🤖 ربات در حال اجراست...")
-        await application.run_polling(close_loop=False, stop_signals=None)
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(_run())
-
-# اجرای Flask و Telegram bot با هم
-if __name__ == "__main__":
-    threading.Thread(target=run_telegram_bot).start()
+# اجرای Flask در یک Thread جداگانه
+def run_flask():
     app.run(host="0.0.0.0", port=10000)
+
+if __name__ == "__main__":
+    # اجرای Flask در Thread جداگانه به صورت daemon
+    threading.Thread(target=run_flask, daemon=True).start()
+
+    # ساخت و اجرای ربات تلگرام در main thread
+    application = ApplicationBuilder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.Document.ALL | filters.VIDEO | filters.PHOTO, handle_file))
+
+    print("🤖 ربات در حال اجراست...")
+    application.run_polling(stop_signals=None)
