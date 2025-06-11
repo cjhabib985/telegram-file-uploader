@@ -1,5 +1,6 @@
 import os
 import asyncio
+import threading
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from flask import Flask
@@ -14,6 +15,7 @@ app = Flask(__name__)
 def home():
     return "ربات آنلاین است 🌐"
 
+# === هندلرها ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("سلام! فایل، عکس یا ویدیوت رو بفرست تا لینک مستقیم تلگرامش رو بدم.")
 
@@ -38,21 +40,19 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📌 اگر تلگرام فیلتر است، ممکن است نیاز به فیلترشکن باشد."
     )
 
-async def run_bot():
-    application = ApplicationBuilder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.Document.ALL | filters.VIDEO | filters.PHOTO, handle_file))
+# === اجرای بات در event loop جدا ===
+def run_telegram_bot():
+    async def _run():
+        application = ApplicationBuilder().token(TOKEN).build()
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(MessageHandler(filters.Document.ALL | filters.VIDEO | filters.PHOTO, handle_file))
+        print("🤖 ربات در حال اجراست...")
+        await application.run_polling()
     
-    print("🤖 ربات در حال اجراست...")
-    await application.run_polling()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_run())
 
 if __name__ == "__main__":
-    # برای اینکه همزمان فلاسک و ربات اجرا بشن
-    import threading
-
-    def run_flask():
-        app.run(host="0.0.0.0", port=10000)
-
-    threading.Thread(target=run_flask).start()
-
-    asyncio.run(run_bot())
+    threading.Thread(target=run_telegram_bot).start()
+    app.run(host="0.0.0.0", port=10000)
