@@ -32,7 +32,7 @@ app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 file_filter = filters.Document.ALL | filters.VIDEO | filters.AUDIO
 
-file_filter = filters.Document() | filters.Video() | filters.Audio()
+file_filter = filters.Document() | filters.VIDEO() | filters.AUDIO()
 
 app.add_handler(MessageHandler(file_filter, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
