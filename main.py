@@ -1,7 +1,12 @@
+import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
 
-BOT_TOKEN = "7902004013:AAEi8bvRLTkIj0dO6mBNXS0QNo0c5hZaiXY"
+# دریافت توکن از متغیر محیطی
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+if not BOT_TOKEN:
+    raise ValueError("توکن ربات پیدا نشد! لطفاً متغیر محیطی BOT_TOKEN را تنظیم کنید.")
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file = update.message.document or update.message.video or update.message.audio
@@ -25,10 +30,9 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# ✅ بدون ایمپورت جداگانه از filters.py
 file_filter = filters.Document.ALL | filters.VIDEO | filters.AUDIO
 
 app.add_handler(MessageHandler(file_filter, handle_file))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
+app.add_handler(CommandHandler("start", handle_start))
 
 app.run_polling()
