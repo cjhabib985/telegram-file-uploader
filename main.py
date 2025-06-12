@@ -30,8 +30,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-file_filter = filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL
-# اما این بالا ارور می‌داد، پس اصلاحش می‌کنیم به:
+file_filter = filters.Document.ALL | filters.VIDEO | filters.Audio.ALL
 
 file_filter = filters.Document() | filters.Video() | filters.Audio()
 
