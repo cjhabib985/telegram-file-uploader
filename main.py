@@ -22,7 +22,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     except Exception as e:
-        print("خطا:", e)
+        print("❌ خطا:", e)
         await update.message.reply_text("❌ مشکلی در پردازش فایل به وجود آمد. لطفاً دوباره تلاش کنید.")
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -30,8 +30,8 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# ✅ فیلترها با حروف کوچک
-file_filter = filters.video | filters.document | filters.audio
+# ✅ استفاده از کلاس‌های فیلتر به‌صورت تابع
+file_filter = filters.Document() | filters.Video() | filters.Audio()
 
 app.add_handler(MessageHandler(file_filter, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
