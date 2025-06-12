@@ -1,59 +1,36 @@
-import os
-import threading
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-from flask import Flask
+from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 
-# گرفتن توکن از متغیر محیطی
-TOKEN = os.getenv("TOKEN")
-if not TOKEN:
-    raise ValueError("توکن ربات در متغیر محیطی TOKEN تنظیم نشده!")
+BOT_TOKEN = "🔑 توکن ربات رو اینجا بذار"
 
-# ساخت اپلیکیشن Flask
-app = Flask(__name__)
-
-@app.route("/", methods=["GET"])
-def home():
-    return "ربات آنلاین است 🌐"
-
-# هندلر دستور /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("سلام! فایل، عکس یا ویدیوت رو بفرست تا لینک مستقیم تلگرامش رو بدم.")
-
-# هندلر برای دریافت فایل، ویدیو یا عکس و ارسال لینک مستقیم
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    file = None
-    if update.message.document:
-        file = update.message.document
-    elif update.message.video:
-        file = update.message.video
-    elif update.message.photo:
-        file = update.message.photo[-1]  # بهترین کیفیت عکس
-    else:
-        await update.message.reply_text("⚠️ فقط فایل، ویدیو یا عکس پشتیبانی می‌شود.")
-        return
+    try:
+        file = update.message.document or update.message.video or update.message.audio
+        if not file:
+            await update.message.reply_text("⚠ لطفاً یک فایل ارسال کنید.")
+            return
 
-    telegram_file = await file.get_file()
-    file_url = telegram_file.file_path
-    direct_link = f"https://api.telegram.org/file/bot{TOKEN}/{file_url}"
+        await update.message.reply_text("✅ فایل دریافت شد. در حال ساخت لینک...")
 
-    await update.message.reply_text(
-        f"✅ لینک مستقیم آماده شد:\n📎 {direct_link}\n\n"
-        "📌 اگر تلگرام فیلتر است، ممکن است نیاز به فیلترشکن باشد."
-    )
+        file_info = await file.get_file()
+        file_path = file_info.file_path
+        link = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
-# اجرای Flask در یک Thread جداگانه
-def run_flask():
-    app.run(host="0.0.0.0", port=10000)
+        await update.message.reply_text(
+            f"🔗 لینک دانلود مستقیم:\n{link}\n\n"
+            f"⚠ اگر لینک باز نشد، لطفاً از VPN استفاده کن. ممکنه تلگرام در کشور شما فیلتر باشه."
+        )
 
-if __name__ == "__main__":
-    # اجرای Flask در Thread جداگانه به صورت daemon
-    threading.Thread(target=run_flask, daemon=True).start()
+    except Exception as e:
+        print("خطا:", e)
+        await update.message.reply_text("❌ مشکلی در پردازش فایل به وجود آمد. لطفاً دوباره تلاش کنید.")
 
-    # ساخت و اجرای ربات تلگرام در main thread
-    application = ApplicationBuilder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.Document.ALL | filters.VIDEO | filters.PHOTO, handle_file))
+async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🤖 سلام! فایل بفرست تا برات لینک دانلود مستقیم بفرستم.")
 
-    print("🤖 ربات در حال اجراست...")
-    application.run_polling(stop_signals=None)
+app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+app.add_handler(MessageHandler(filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL, handle_file))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
+
+app.run_polling()
