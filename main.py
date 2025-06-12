@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = "توکن ربات خودت"
+BOT_TOKEN = "7902004013:AAEi8bvRLTkIj0dO6mBNXS0QNo0c5hZaiXY"
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file = update.message.document or update.message.video or update.message.audio
