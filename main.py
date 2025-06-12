@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = "توکن رباتت اینجا"
+BOT_TOKEN = "توکن رباتت"
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -30,9 +30,8 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-file_filter = filters.Document.ALL | filters.VIDEO | filters.AUDIO
-
-file_filter = filters.Document() | filters.VIDEO() | filters.AUDIO()
+# ✅ اینجا بدون پرانتز استفاده کن
+file_filter = filters.VIDEO | filters.DOCUMENT | filters.AUDIO
 
 app.add_handler(MessageHandler(file_filter, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
