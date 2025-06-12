@@ -1,7 +1,7 @@
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = "🔑 توکن ربات رو اینجا بذار"
+BOT_TOKEN = "توکن رباتت اینجا"
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -30,7 +30,11 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-file_filter = filters.VIDEO | filters.DOCUMENT | filters.AUDIO
+file_filter = filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL
+# اما این بالا ارور می‌داد، پس اصلاحش می‌کنیم به:
+
+file_filter = filters.Document() | filters.Video() | filters.Audio()
+
 app.add_handler(MessageHandler(file_filter, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
 
