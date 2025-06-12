@@ -30,8 +30,8 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# ✅ اینجا بدون پرانتز استفاده کن
-file_filter = filters.VIDEO | filters.DOCUMENT | filters.AUDIO
+# ✅ فیلترها با حروف کوچک
+file_filter = filters.video | filters.document | filters.audio
 
 app.add_handler(MessageHandler(file_filter, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
