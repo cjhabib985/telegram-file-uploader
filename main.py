@@ -30,7 +30,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-file_filter = filters.Document.ALL | filters.VIDEO | filters.Audio.ALL
+file_filter = filters.Document.ALL | filters.VIDEO | filters.AUDIO
 
 file_filter = filters.Document() | filters.Video() | filters.Audio()
 
