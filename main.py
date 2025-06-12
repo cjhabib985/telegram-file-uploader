@@ -1,7 +1,8 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+from telegram.ext.filters import Document, Video, Audio  # ✅ وارد کردن فیلترها به‌صورت کلاس
 
-BOT_TOKEN = "توکن رباتت"
+BOT_TOKEN = "توکن ربات"
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -30,8 +31,8 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# ✅ استفاده از کلاس‌های فیلتر به‌صورت تابع
-file_filter = filters.Document() | filters.Video() | filters.Audio()
+# ✅ ساختن فیلتر ترکیبی
+file_filter = Document() | Video() | Audio()
 
 app.add_handler(MessageHandler(file_filter, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^/start'), handle_start))
